@@ -1,4 +1,4 @@
-package cx.rain.classicui.gui.widget;
+package cx.rain.classicui.gui.widget.text;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import cx.rain.classicui.utility.ContentAlign;
@@ -15,7 +15,7 @@ import java.util.List;
  * Multi-lined text control.
  * For single-line text, use {@link WLabel}.
  */
-public class WText extends WLabel {
+public class WText extends WLabel { // Todo: qyl27: add styled renderer.
     public static final int DEFAULT_LINE_SPACING = 2;
 
     protected List<FormattedCharSequence> lines;

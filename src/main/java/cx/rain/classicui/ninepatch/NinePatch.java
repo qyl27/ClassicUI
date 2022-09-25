@@ -1,27 +1,29 @@
 package cx.rain.classicui.ninepatch;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import cx.rain.classicui.utility.DebugLoggerHelper;
-import cx.rain.classicui.utility.Location;
-import cx.rain.classicui.utility.Size;
-import cx.rain.classicui.utility.UV;
+import com.mojang.blaze3d.vertex.*;
+import cx.rain.classicui.utility.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class NinePatch {
+    public static final Map<ResourceLocation, NinePatch> CACHE = new HashMap<>();
+
     public static final int FULL_ALPHA = 255;
     public static final int BLACK_COLOR = FastColor.ARGB32.color(FULL_ALPHA, 0, 0, 0);
 
-    private ResourceLocation imageLocation;
-    private int imageWidth;
-    private int imageHeight;
-    private Location imagePatchStart;
-    private Size imagePatchSize;
-    private Location imagePaddingStart;
-    private Size imagePaddingSize;
+    private final ResourceLocation imageLocation;
+    private final int imageWidth;
+    private final int imageHeight;
+    private final Location imagePatchStart;
+    private final Size imagePatchSize;
+    private final Location imagePaddingStart;
+    private final Size imagePaddingSize;
 
     /**
      * Create NinePatch instance for image.
@@ -43,9 +45,15 @@ public final class NinePatch {
         imagePatchSize = patchSize;
         imagePaddingStart = paddingStart;
         imagePaddingSize = paddingSize;
+
+        CACHE.put(image, this);
     }
 
     public static NinePatch from(ResourceLocation image) {
+        if (CACHE.containsKey(image)) {
+            return CACHE.get(image);
+        }
+
         var resource = Minecraft.getInstance().getResourceManager().getResource(image).orElse(null);
 
         if (resource == null) {
@@ -165,7 +173,7 @@ public final class NinePatch {
      *
      * @return UV array.
      */
-    public UV[] getUV() {
+    public UV[] getUVArray() {
         var patchEnd = new Location(imagePatchStart.x() + imagePatchSize.width(), imagePatchStart.y() + imagePatchSize.height());
         var paddingEnd = new Location(imagePaddingStart.x() + imagePaddingSize.width(), imagePaddingStart.y() + imagePaddingSize.height());
 
@@ -224,5 +232,16 @@ public final class NinePatch {
 
     private float clipHeight(int i) {
         return 1.0f / imageHeight * i;
+    }
+
+    public void draw(PoseStack stack, Location start, Size size, Location contentStart, Size contentSize) {
+        var uvs = getUVArray();
+
+        for (var i = 0; i < 9; i++) {
+            var index = i * 4;
+
+            // Todo.
+//            DrawingHelper.drawRect(stack, start.x(), start.y(), , uvs[index], uvs[index + 3]);
+        }
     }
 }

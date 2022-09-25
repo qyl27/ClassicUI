@@ -1,4 +1,4 @@
-package cx.rain.classicui.gui.widget;
+package cx.rain.classicui.gui.widget.text;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import cx.rain.classicui.gui.widget.base.AbstractWidget;
@@ -6,6 +6,7 @@ import cx.rain.classicui.utility.ContentAlign;
 import cx.rain.classicui.utility.DrawingHelper;
 import cx.rain.classicui.utility.HandleResult;
 import cx.rain.classicui.utility.InputHandler;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * Single-line GUI widget.
  * For multi-line text, use {@link WText}.
  */
-public class WLabel extends AbstractWidget {
+public class WLabel extends AbstractWidget {    // Todo: qyl27: add styled renderer.
     protected Component textComponent;
     protected ContentAlign contentAlign = new ContentAlign(ContentAlign.Horizontal.LEFT, ContentAlign.Vertical.TOP);
 

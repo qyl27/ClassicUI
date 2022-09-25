@@ -1,6 +1,6 @@
 package cx.rain.classicui.gui.widget.container;
 
-import cx.rain.classicui.gui.widget.WLabel;
+import cx.rain.classicui.gui.widget.text.WLabel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
