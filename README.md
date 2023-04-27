@@ -14,8 +14,8 @@ Inspired by [LibGui](https://github.com/CottonMC/LibGui) and [SinoCore](https://
 ### Widgets
 | Status | Name             | Description              |
 |--------|------------------|--------------------------|
-| √      | WLabel           | Label text (single line) |
-| √      | WText            | Multiline text.          |
+|        | WLabel           | Label text (single line) |
+|        | WText            | Multiline text.          |
 |        | WPlainCanvas     |                          |
 |        | WGrid            |                          |
 |        | WPlayerInventory |                          |
@@ -23,6 +23,6 @@ Inspired by [LibGui](https://github.com/CottonMC/LibGui) and [SinoCore](https://
 |        | WItemSlotSet     |                          |
 
 ## License
-Copyright (c) 2022 qyl27.  
+Copyright (c) 2022-2023 qyl27.  
 Free for non-commercial uses.  
 Please let me know before your redistributing of this library.  
