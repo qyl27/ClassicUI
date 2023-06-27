@@ -1,122 +1,53 @@
 plugins {
-    id 'eclipse'
-    id 'maven-publish'
     id "architectury-plugin" version "3.4-SNAPSHOT"
     id "dev.architectury.loom" version "1.1-SNAPSHOT" apply false
 }
 
-apply plugin: 'java'
-apply plugin: 'architectury-plugin'
-apply plugin: 'maven-publish'
-apply plugin: 'dev.architectury.loom'
-
-group = 'cx.rain.mc.classicui' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'classicui'
-
-version = project.mod_version
-if (System.getenv("JITPACK") == "true") {
-    version += "-${System.getenv("VERSION")}"
-}
-var release = false
-if (release || (project.hasProperty("CLASSIC_UI_RELEASE") && project.property("CLASSIC_UI_RELEASE") == 'true')) {
-    version += '-release'
-} else {
-    version += '-dev'
-}
-
 architectury {
-    platformSetupLoomIde()
-    forge()
+    minecraft = rootProject.minecraft_version
 }
 
-loom {
-    silentMojangMappingsLicense()
+subprojects {
+    apply plugin: "dev.architectury.loom"
 
-    forge {}
+    loom {
+        silentMojangMappingsLicense()
+    }
 
-    runs {
-        data {
-            data()
-            programArgs '--all', '--mod', 'classicui'
-            programArgs '--output', file('src/generated/resources').absolutePath
-            programArgs '--existing', file('src/main/resources').absolutePath
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        // The following line declares the mojmap mappings, you may use other mappings as well
+        mappings loom.layered() {
+            officialMojangMappings()
+            parchment('org.parchmentmc.data:parchment-1.19.3:2023.03.12@zip')
         }
+        // The following line declares the yarn mappings you may select this one as well.
+        // mappings "net.fabricmc:yarn:@YARN_MAPPINGS@:v2"
     }
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+allprojects {
+    apply plugin: "java"
+    apply plugin: "architectury-plugin"
+    apply plugin: "maven-publish"
 
-println "Java: ${System.getProperty 'java.version'}, " +
-        "JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), " +
-        "Arch: ${System.getProperty 'os.arch'}"
+    archivesBaseName = rootProject.archives_base_name
+    version = rootProject.mod_version
+    group = rootProject.maven_group
 
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-}
-
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-repositories {
-    flatDir {
-        dir 'libs'
-    }
-
-    maven {
-        name = 'Jitpack'
-        url = 'https://jitpack.io'
-    }
-
-    maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org'
-    }
-}
-
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
-
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    forge "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
-
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.parchment_minecraft_version}:${project.parchment_version}@zip")
-    }
-}
-
-jar {
-    archiveClassifier.set('')
-
-    manifest {
-        attributes([
-                "Specification-Title"     : "classicui",
-                "Specification-Vendor"    : "qyl27",
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : "qyl27",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
     repositories {
         maven {
-            url "file://${project.projectDir}/mcmodsrepo"
+            name = 'ParchmentMC'
+            url = 'https://maven.parchmentmc.org'
         }
     }
-}
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.release = 17
+    }
+
+    java {
+        withSourcesJar()
+    }
 }
