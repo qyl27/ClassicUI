@@ -1,122 +1,188 @@
 plugins {
-    id 'eclipse'
-    id 'maven-publish'
-    id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "dev.architectury.loom" version "1.1-SNAPSHOT" apply false
+    id 'architectury-plugin' version "${architect_plugin_version}" apply false
+    id 'dev.architectury.loom' version "${architectury_loom_version}" apply false
+    id 'com.github.johnrengelman.shadow' version "${shadow_plugin_version}" apply false
+    id 'me.shedaniel.unified-publishing' version "${unified_publishing_version}" apply false
 }
 
-apply plugin: 'java'
-apply plugin: 'architectury-plugin'
-apply plugin: 'maven-publish'
-apply plugin: 'dev.architectury.loom'
+def ENV = System.getenv()
 
-group = 'cx.rain.mc.classicui' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'classicui'
-
-version = project.mod_version
-if (System.getenv("JITPACK") == "true") {
-    version += "-${System.getenv("VERSION")}"
+var publishVersion = project.mod_version
+publishVersion += "+mc${project.minecraft_version}"
+var mavenVersion = publishVersion
+if (!ENV.MOD_RELEASE) {
+    mavenVersion += '-SNAPSHOT'
 }
-var release = false
-if (release || (project.hasProperty("CLASSIC_UI_RELEASE") && project.property("CLASSIC_UI_RELEASE") == 'true')) {
-    version += '-release'
-} else {
-    version += '-dev'
+ext.publishVersion = publishVersion
+ext.mavenVersion = mavenVersion
+
+allprojects {
+    apply plugin: 'architectury-plugin'
+    apply plugin: 'dev.architectury.loom'
+
+    group = project.mod_group
+    version = project.mod_version
+
+    architectury {
+        minecraft = project.minecraft_version
+    }
+
+    loom {
+        silentMojangMappingsLicense()
+
+        setEnableTransitiveAccessWideners true
+        setEnableModProvidedJavadoc true
+
+        accessWidenerPath = file("src/main/resources/classicui.accesswidener")
+
+        interfaceInjection {
+            setEnableDependencyInterfaceInjection true
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'ParchmentMC'
+            url = 'https://maven.parchmentmc.org'
+        }
+
+        repositories {
+            maven {
+                name = 'Mod Menu'
+                url = 'https://maven.terraformersmc.com/releases'
+            }
+        }
+
+        maven {
+            name = 'Curse maven'
+            url = 'https://cursemaven.com'
+            content {
+                includeGroup 'curse.maven'
+            }
+        }
+
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases/'
+        }
+
+        maven {
+            name = 'Quilt'
+            url = 'https://maven.quiltmc.org/repository/release'
+        }
+
+        mavenCentral()
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+        mappings loom.layered() {
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${project.parchment_minecraft_version}:${project.parchment_version}@zip")
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.release = 17
+    }
+
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+
+    java {
+        withSourcesJar()
+    }
+
+    processResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        def copyDetails = (copy) -> {
+            expand(project.properties)
+        }
+
+        filesMatching('*/**/mods.toml', copyDetails)
+        filesMatching('fabric.mod.json', copyDetails)
+        filesMatching('quilt.mod.json', copyDetails)
+        filesMatching('pack.mcmeta', copyDetails)
+    }
+}
+
+subprojects {
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'me.shedaniel.unified-publishing'
+
+    loom {
+        accessWidenerPath = project(':').loom.accessWidenerPath
+    }
+
+    configurations {
+        common
+        shadowCommon
+        compileClasspath.extendsFrom common
+        runtimeClasspath.extendsFrom common
+
+        developmentForge.extendsFrom common
+        developmentFabric.extendsFrom common
+        developmentNeoForge.extendsFrom common
+        developmentQuilt.extendsFrom common
+    }
+
+    dependencies {
+        common(project(path: ':', configuration: 'namedElements')) { transitive = false }
+        shadowCommon(project(path: ':', configuration: 'transformProductionFabric')) { transitive = false }
+    }
+
+    remapJar {
+        injectAccessWidener = true
+        input.set shadowJar.archiveFile
+        dependsOn shadowJar
+    }
+
+    sourcesJar {
+        def commonSources = project(':').sourcesJar
+        dependsOn commonSources
+        from commonSources.archiveFile.map { zipTree(it) }
+    }
+
+    components.java {
+        withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+            skip()
+        }
+    }
+
+    publishing {
+        repositories {
+            mavenLocal()
+
+            maven {
+                name = 'YuluoMaven'
+                version = mavenVersion
+
+                def releaseUrl = 'https://maven.yuluo.dev/repository/maven-releases/'
+                def snapshotUrl = 'https://maven.yuluo.dev/repository/maven-snapshots/'
+                url = ENV.MOD_RELEASE ? releaseUrl : snapshotUrl
+
+                credentials {
+                    username ENV.MOD_MAVEN_USER
+                    password ENV.MOD_MAVEN_PASS
+                }
+            }
+        }
+    }
 }
 
 architectury {
-    platformSetupLoomIde()
-    forge()
+    common(project.enabled_platforms.split(','))
 }
 
-loom {
-    silentMojangMappingsLicense()
-
-    forge {}
-
-    runs {
-        data {
-            data()
-            programArgs '--all', '--mod', 'classicui'
-            programArgs '--output', file('src/generated/resources').absolutePath
-            programArgs '--existing', file('src/main/resources').absolutePath
+sourceSets {
+    main {
+        resources {
+            srcDir file('src/generated/resources')
         }
     }
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-
-println "Java: ${System.getProperty 'java.version'}, " +
-        "JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), " +
-        "Arch: ${System.getProperty 'os.arch'}"
-
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-}
-
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-repositories {
-    flatDir {
-        dir 'libs'
-    }
-
-    maven {
-        name = 'Jitpack'
-        url = 'https://jitpack.io'
-    }
-
-    maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org'
-    }
-}
-
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
-
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    forge "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
-
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.parchment_minecraft_version}:${project.parchment_version}@zip")
-    }
-}
-
-jar {
-    archiveClassifier.set('')
-
-    manifest {
-        attributes([
-                "Specification-Title"     : "classicui",
-                "Specification-Vendor"    : "qyl27",
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : "qyl27",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/mcmodsrepo"
-        }
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }

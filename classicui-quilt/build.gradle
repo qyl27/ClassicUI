@@ -1,0 +1,56 @@
+plugins {
+    id 'architectury-plugin' version "${architect_plugin_version}"
+    id 'dev.architectury.loom' version "${architectury_loom_version}"
+    id 'me.shedaniel.unified-publishing' version "${unified_publishing_version}"
+}
+
+architectury {
+    platformSetupLoomIde()
+    loader('quilt')
+}
+
+loom {
+}
+
+dependencies {
+    modImplementation "org.quiltmc:quilt-loader:${project.quilt_loader_version}"
+    modApi "org.quiltmc.quilted-fabric-api:quilted-fabric-api:${project.quilt_api_version}"
+}
+
+shadowJar {
+    exclude 'architectury.common.json'
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = 'dev-shadow'
+}
+
+unifiedPublishing {
+    project {
+        displayName = "Classic UI Quilt ${project.minecraft_version}-${project.mod_version}"
+        version = publishVersion
+        gameVersions = [project.minecraft_version]
+        gameLoaders = ['quilt']
+        releaseType = 'beta'
+        changelog = 'See the GitHub repository for more information. \nhttps://github.com/qyl27/ClassicUI'
+
+        mainPublication tasks.remapJar
+        secondaryPublication tasks.remapSourcesJar.getArchiveFile()
+
+        relations {
+            depends {
+//                curseforge = 'fabric-api'
+//                modrinth = 'fabric-api'
+            }
+        }
+
+        curseforge {
+            token = System.getenv('CURSEFORGE_TOKEN')
+            id = project.curseforge_project_id
+        }
+
+        modrinth {
+            token = System.getenv('MODRINTH_TOKEN')
+            id = project.modrinth_project_id
+        }
+    }
+}
