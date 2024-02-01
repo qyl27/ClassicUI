@@ -107,6 +107,7 @@ allprojects {
         filesMatching('fabric.mod.json', copyDetails)
         filesMatching('quilt.mod.json', copyDetails)
         filesMatching('pack.mcmeta', copyDetails)
+        filesMatching('build.properties', copyDetails)
     }
 }
 

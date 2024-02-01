@@ -12,20 +12,20 @@ A GUI library for Minecraft.
 ### Widgets
 | Status | Name          | Description                            |
 |--------|---------------|----------------------------------------|
-|        | WCanvas       | Canvas of GUI.                         |
-|        | WGrid         | Grid layout.                           |
-|        | WLabel        | Label text (single line).              |
-|        | WText         | Multiline text.                        |
-|        | WItemSlot     | Slot for placing item.                 |
-|        | WInventory    | A set of slot with custom size.        |
-|        | WButton       | Clickable button.                      |
-|        | WInputBox     | Input box.                             |
-|        | WPicture      | Just displaying a texture.             |
-|        | WDropdownList | A dropdown list for limited selection. |
-|        | WCheckbox     | Checkbox.                              |
-|        | WRadioBox     | Single-checkbox.                       |
-|        | WTreeView     | Tree-styled list.                      |
-|        | WSlideBlock   | A slide block between two number.      |
+|        | CCanvas       | Canvas of GUI.                         |
+|        | CGrid         | Grid layout.                           |
+|        | CLabel        | Label text (single line).              |
+|        | CText         | Multiline text.                        |
+|        | CItemSlot     | Slot for placing item.                 |
+|        | CInventory    | A set of slot with custom size.        |
+|        | CButton       | Clickable button.                      |
+|        | CInputBox     | Input box.                             |
+|        | CPicture      | Just displaying a texture.             |
+|        | CDropdownList | A dropdown list for limited selection. |
+|        | CCheckbox     | Checkbox.                              |
+|        | CRadioBox     | Single-checkbox.                       |
+|        | CTreeView     | Tree-styled list.                      |
+|        | CSlideBlock   | A slide block between two number.      |
 
 ## License
 Copyright (c) 2022-2024 qyl27.  
