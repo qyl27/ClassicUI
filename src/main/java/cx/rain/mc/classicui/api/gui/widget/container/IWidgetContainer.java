@@ -1,8 +1,10 @@
-package cx.rain.mc.classicui.api.gui.widget;
+package cx.rain.mc.classicui.api.gui.widget.container;
+
+import cx.rain.mc.classicui.api.gui.widget.ICWidget;
 
 import java.util.List;
 
-public interface IContainerWidget extends ICWidget {
+public interface IWidgetContainer {
     void addChild(ICWidget widget);
     void removeChild(ICWidget widget);
 

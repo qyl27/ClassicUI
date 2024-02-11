@@ -8,23 +8,23 @@ public enum HandleResult {
     ;
 
     private final boolean isHandled;
-    private final boolean isBlocked;
+    private final boolean isTerminated;
 
     /**
      * An event handle result.
      * @param isHandled Was handled?
-     * @param isBlocked Should pass to widget under it?
+     * @param isTerminated Should pass to widget which under it?
      */
-    HandleResult(boolean isHandled, boolean isBlocked) {
+    HandleResult(boolean isHandled, boolean isTerminated) {
         this.isHandled = isHandled;
-        this.isBlocked = isBlocked;
+        this.isTerminated = isTerminated;
     }
 
     public boolean isHandled() {
         return isHandled;
     }
 
-    public boolean isBlocked() {
-        return isBlocked;
+    public boolean isTerminated() {
+        return isTerminated;
     }
 }

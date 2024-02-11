@@ -16,6 +16,15 @@ public class CLabel extends CAbstractWidget {
     protected final Color color;
     protected final Align.Horizontal horizontalAlign;
 
+    public CLabel(Location location, Size size, Component content) {
+        this(location, size, content, Color.WHITE, Align.Horizontal.LEFT);
+    }
+
+    public CLabel(Location location, Size size, Component content,
+                  @Nullable Color color) {
+        this(location, size, content, color, Align.Horizontal.LEFT);
+    }
+
     public CLabel(Location location, Size size, Component content,
                   @Nullable Color color, @Nullable Align.Horizontal horizontalAlign) {
         super(location, size);
@@ -36,5 +45,10 @@ public class CLabel extends CAbstractWidget {
         }
 
         drawing.string(content, loc, color);
+    }
+
+    @Override
+    public Component getNarration() {
+        return content;
     }
 }
