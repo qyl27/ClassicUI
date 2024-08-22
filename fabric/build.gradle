@@ -1,0 +1,51 @@
+plugins {
+    id 'architectury-plugin' version "${architect_plugin_version}"
+    id 'dev.architectury.loom' version "${architectury_loom_version}"
+    id 'me.shedaniel.unified-publishing' version "${unified_publishing_version}"
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+
+    modRuntimeOnly "com.terraformersmc:modmenu:${rootProject.fabric_mod_menu_version}"
+
+    common(project(path: ':', configuration: 'namedElements')) { transitive = false }
+    shadowBundle project(path: ':', configuration: 'transformProductionFabric')
+}
+
+unifiedPublishing {
+    project {
+        displayName = "Classic UI Fabric ${rootProject.minecraft_version}-${rootProject.mod_version}"
+        version = publishVersion
+        gameVersions = [rootProject.minecraft_version]
+        gameLoaders = ['fabric']
+        releaseType = 'release'
+        changelog = 'See the GitHub repository for more information. \nhttps://github.com/qyl27/ClassicUI'
+
+        mainPublication tasks.remapJar
+        secondaryPublication tasks.remapSourcesJar.getArchiveFile()
+
+        relations {
+            depends {
+                curseforge = 'fabric-api'
+                modrinth = 'fabric-api'
+            }
+        }
+
+        curseforge {
+            token = Objects.requireNonNullElse(System.getenv('CURSEFORGE_TOKEN'), "")
+            id = rootProject.curseforge_project_id
+        }
+
+        modrinth {
+            token = Objects.requireNonNullElse(System.getenv('MODRINTH_TOKEN'), "")
+            id = rootProject.modrinth_project_id
+        }
+    }
+}

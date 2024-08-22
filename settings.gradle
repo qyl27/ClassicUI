@@ -10,9 +10,9 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'classicui'
+rootProject.name = 'classic-ui'
 
-include ':classicui-forge'
-include ':classicui-fabric'
-include ':classicui-neoforge'
-include ':classicui-quilt'
+include ':forge'
+include ':fabric'
+//include ':neoforge'
+//include ':quilt'

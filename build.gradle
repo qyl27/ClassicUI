@@ -1,3 +1,5 @@
+import java.time.ZonedDateTime
+
 plugins {
     id 'architectury-plugin' version "${architect_plugin_version}" apply false
     id 'dev.architectury.loom' version "${architectury_loom_version}" apply false
@@ -17,14 +19,15 @@ ext.publishVersion = publishVersion
 ext.mavenVersion = mavenVersion
 
 allprojects {
+    apply plugin: 'maven-publish'
     apply plugin: 'architectury-plugin'
     apply plugin: 'dev.architectury.loom'
 
-    group = project.mod_group
-    version = project.mod_version
+    group = rootProject.mod_group
+    version = rootProject.mod_version
 
     architectury {
-        minecraft = project.minecraft_version
+        minecraft = rootProject.minecraft_version
     }
 
     loom {
@@ -32,8 +35,6 @@ allprojects {
 
         setEnableTransitiveAccessWideners true
         setEnableModProvidedJavadoc true
-
-        accessWidenerPath = file("src/main/resources/classicui.accesswidener")
 
         interfaceInjection {
             setEnableDependencyInterfaceInjection true
@@ -75,11 +76,11 @@ allprojects {
     }
 
     dependencies {
-        minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
 
         mappings loom.layered() {
             officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-${project.parchment_minecraft_version}:${project.parchment_version}@zip")
+            parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_version}@zip")
         }
     }
 
@@ -88,71 +89,58 @@ allprojects {
         options.release = 17
     }
 
-    configurations.all {
-        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-    }
-
     java {
         withSourcesJar()
     }
 
     processResources {
+        var resourcesToReplace = ['build_info.properties',
+                                  'META-INF/mods.toml',
+                                  'META-INF/neoforge.mods.toml',
+                                  'pack.mcmeta',
+                                  'fabric.mod.json',
+                                  'quilt.mod.json']
+        var replaceTokens = [
+                build_time: ZonedDateTime.now().toString(),
+                mod_id: mod_id,
+                mod_name: mod_name,
+                mod_version: mod_version,
+                mod_group: mod_group,
+                mod_description: mod_description,
+                mod_url_home: mod_url_home,
+                mod_url_source: mod_url_source,
+                mod_url_issues: mod_url_issues,
+                mod_authors: mod_authors,
+                mod_credits: mod_credits,
+                mod_license: mod_license,
+                minecraft_version: minecraft_version,
+                parchment_minecraft_version: parchment_minecraft_version,
+                parchment_version: parchment_version,
+                forge_loader_version: forge_loader_version,
+                forge_version: forge_version,
+                fabric_loader_version: fabric_loader_version,
+                fabric_api_version: fabric_api_version,
+                neoforge_loader_version: neoforge_loader_version,
+                neoforge_version: neoforge_version,
+                quilt_loader_version: quilt_loader_version,
+                quilt_api_version: quilt_api_version,
+                next_minecraft_version: next_minecraft_version,
+                next_forge_loader_version: next_forge_loader_version,
+                next_forge_version: next_forge_version,
+                next_fabric_loader_version: next_fabric_loader_version,
+                next_fabric_api_version: next_fabric_api_version,
+                next_neoforge_loader_version: next_neoforge_loader_version,
+                next_neoforge_version: next_neoforge_version,
+                next_quilt_loader_version: next_quilt_loader_version,
+                next_quilt_api_version: next_quilt_api_version,
+        ]
+
+        inputs.properties replaceTokens
+        filesMatching(resourcesToReplace) {
+            expand replaceTokens
+        }
+
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        def copyDetails = (copy) -> {
-            expand(project.properties)
-        }
-
-        filesMatching('*/**/mods.toml', copyDetails)
-        filesMatching('fabric.mod.json', copyDetails)
-        filesMatching('quilt.mod.json', copyDetails)
-        filesMatching('pack.mcmeta', copyDetails)
-        filesMatching('build.properties', copyDetails)
-    }
-}
-
-subprojects {
-    apply plugin: 'maven-publish'
-    apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'me.shedaniel.unified-publishing'
-
-    loom {
-        accessWidenerPath = project(':').loom.accessWidenerPath
-    }
-
-    configurations {
-        common
-        shadowCommon
-        compileClasspath.extendsFrom common
-        runtimeClasspath.extendsFrom common
-
-        developmentForge.extendsFrom common
-        developmentFabric.extendsFrom common
-        developmentNeoForge.extendsFrom common
-        developmentQuilt.extendsFrom common
-    }
-
-    dependencies {
-        common(project(path: ':', configuration: 'namedElements')) { transitive = false }
-        shadowCommon(project(path: ':', configuration: 'transformProductionFabric')) { transitive = false }
-    }
-
-    remapJar {
-        injectAccessWidener = true
-        input.set shadowJar.archiveFile
-        dependsOn shadowJar
-    }
-
-    sourcesJar {
-        def commonSources = project(':').sourcesJar
-        dependsOn commonSources
-        from commonSources.archiveFile.map { zipTree(it) }
-    }
-
-    components.java {
-        withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-            skip()
-        }
     }
 
     publishing {
@@ -176,14 +164,88 @@ subprojects {
     }
 }
 
+subprojects {
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'me.shedaniel.unified-publishing'
+
+    loom {
+        accessWidenerPath = project(':').loom.accessWidenerPath
+    }
+
+    configurations {
+        common {
+            canBeResolved = true
+            canBeConsumed = false
+        }
+        compileClasspath.extendsFrom common
+        runtimeClasspath.extendsFrom common
+        developmentForge.extendsFrom common
+        developmentFabric.extendsFrom common
+
+        shadowBundle {
+            canBeResolved = true
+            canBeConsumed = false
+        }
+    }
+
+    shadowJar {
+        exclude 'architectury.common.json'
+
+        configurations = [project.configurations.shadowBundle]
+        archiveClassifier = 'dev-shadow'
+    }
+
+    remapJar {
+        injectAccessWidener = true
+        input.set shadowJar.archiveFile
+        dependsOn shadowJar
+    }
+
+    sourcesJar {
+        def commonSources = project(':').sourcesJar
+        dependsOn commonSources
+        from commonSources.archiveFile.map { zipTree(it) }
+    }
+
+    components.java {
+        withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+            skip()
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                artifactId = "${rootProject.name}-${project.name}"
+                version = mavenVersion
+                from components.java
+            }
+        }
+    }
+}
+
 architectury {
     common(project.enabled_platforms.split(','))
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/classicui.accesswidener")
 }
 
 sourceSets {
     main {
         resources {
             srcDir file('src/generated/resources')
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = project.name
+            version = mavenVersion
+            from components.java
         }
     }
 }
